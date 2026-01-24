@@ -23,19 +23,6 @@ Identify usage outliers and cost patterns
 
 Build analytical SQL views for reporting and analysis
 
-🚀 Quick Start
-
-Clone the repository and start PostgreSQL 16
-
-Execute SQL scripts in order:
-
-sql/01_bronze.sql → sql/04_gold_views.sql
-
-Test with:
-
-SELECT * 
-FROM project.gold_top_usage 
-LIMIT 10;
 
 🏗️ Medallion Architecture
 
@@ -69,6 +56,36 @@ Acts as the source of truth for audits and reprocessing
 Table
 
 project.raw_bronze
+
+**Source CSV Structure:**
+| Column | Type | Description |
+|--------|------|-------------|
+| billing_account_id | TEXT | GCP billing account ID |
+| invoice_month | DATE | Billing period (month) |
+| usage_start_time | TIMESTAMP | Usage/query start time |
+| usage_end_time | TIMESTAMP | Usage/query end time |
+| project_id | TEXT | GCP project ID |
+| project_name | TEXT | Project display name |
+| business_unit | TEXT | Business unit/division |
+| team_name | TEXT | Owning team name |
+| service_description | TEXT | GCP service (BigQuery, Storage, etc.) |
+| sku_description | TEXT | SKU details (Query GB, VM Instance, etc.) |
+| region | TEXT | GCP region (southamerica-east1, etc.) |
+| usage_amount | NUMERIC(15,3) | Usage quantity |
+| usage_unit | TEXT | Unit (gigabytes, hours, etc.) |
+| cost | NUMERIC(10,4) | Cost amount |
+| currency | TEXT | Currency (USD, BRL, etc.) |
+| is_bigquery | BOOLEAN | BigQuery service flag |
+| bq_query_type | TEXT | BigQuery query type |
+| bq_bad_bytes | NUMERIC(15,3) | Bad bytes processed (BigQuery) |
+| bq_query_text | TEXT | Actual SQL query text |
+| temp_id_line | SERIAL | Temporary line identifier |
+
+**Sample data volume:** ~10k rows across 4 months (2025-10 to 2026-01)
+
+**Table:** `project.raw_bronze` (matches CSV 1:1)
+
+**Sample data volume:** ~10k rows across 4 months
 
 🥈 Silver Layer — Cleaning & Modeling
 
