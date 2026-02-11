@@ -1,0 +1,22 @@
+CREATE TABLE project.raw_bronze (
+    billing_account_id text,
+    invoice_month date,
+    usage_start_time timestamp without time zone,
+    usage_end_time timestamp without time zone,
+    project_id text,
+    project_name text,
+    business_unit text,
+    team_name text,
+    service_description text,
+    sku_description text,
+    region text,
+    usage_amount numeric(15,3),
+    usage_unit text,
+    cost numeric(10,4),
+    currency text,
+    is_bigquery boolean,
+    bq_query_type text,
+    bq_bad_bytes numeric(20,3),
+    bq_query_text text,
+    temp_id_line integer NOT NULL
+);
