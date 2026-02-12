@@ -91,7 +91,7 @@ project.raw_bronze
 
 This layer contains the core ELT logic.
 
-Key operations
+##Key operations
 
 Text normalization using TRIM, INITCAP, COALESCE
 
