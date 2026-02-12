@@ -85,13 +85,11 @@ project.raw_bronze
 
 **Table:** `project.raw_bronze` (matches CSV 1:1)
 
-**Sample data volume:** ~10k rows across 4 months
-
 🥈 Silver Layer — Cleaning & Modeling
 
 This layer contains the core ELT logic.
 
-##Key operations
+Key operations
 
 Text normalization using TRIM, INITCAP, COALESCE
 
@@ -175,6 +173,7 @@ Usage and cost per month
 
 Records exceeding the P90 usage threshold
 <img width="1211" height="157" alt="image" src="https://github.com/user-attachments/assets/b5b6af4a-83af-469e-8a04-358e913fd4f7" />
+
 
 
 ⚠️ Limitations
