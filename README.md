@@ -1,63 +1,56 @@
-📊 GCP FinOps Data Warehouse
+# 📊 GCP FinOps Data Warehouse
 
-SQL-first ELT · Medallion Architecture · PostgreSQL 16
+Projeto prático de **Engenharia de Dados** focado em análise de custos cloud (FinOps), utilizando  o SGBD **PostgreSQL** e com a simulação de um **Data Warehouse** com arquitetura **Medallion**.
 
-Self-taught study project simulating cloud cost analysis with a production-oriented dimensional model.
+---
 
-Overview
+## 🚀 Sobre o Projeto
 
-This is a study project simulating a FinOps audit of GCP Billing data using PostgreSQL and a medallion-style architecture (Bronze → Silver → Gold).
+Este projeto segue uma abordagem ELT com foco em SQL, priorizando a modelagem de dados, a qualidade dos dados e as transformações analíticas.
+Todos os dados representam uma conta de faturamento fictícia do GCP, criada exclusivamente para fins de aprendizado.
 
-It follows a SQL-first ELT approach, focusing on data modeling, data quality, and analytical transformations.
-All data represents a fictional GCP billing account, created exclusively for learning purposes.
+## 📌 Objetivos
 
-🎯 Objectives
+-Simular a análise de custos em nuvem sob a perspectiva de FinOps
 
-Simulate cloud cost analysis from a FinOps perspective
+-Aplicar a arquitetura Medallion como um padrão lógico de organização de dados
 
-Apply the medallion architecture as a logical data organization pattern
+-Praticar a modelagem dimensional e tabelas de fatos particionadas
 
-Practice dimensional modeling and partitioned fact tables
+-Identificar valores atípicos de uso e padrões de custo
 
-Identify usage outliers and cost patterns
+-Criar visualizações SQL analíticas para geração de relatórios e análises
 
-Build analytical SQL views for reporting and analysis
+---
 
+## 🏗️ Arquitetura Medallion
 
-🏗️ Medallion Architecture
+Este projeto utiliza a arquitetura de medalhão como um padrão conceitual, não como um pipeline orquestrado.
 
-This project uses the medallion architecture as a conceptual pattern, not as an orchestrated pipeline.
-
-
-
-<img width="883" height="425" alt="image" src="https://github.com/user-attachments/assets/7981e242-b363-471b-91aa-3a3a065e1e15" />
-
-
+| Camada | Objetivo |
+|--------|----------|
+| Bronze | dados de faturamento brutos e imutáveis ​​para rastreabilidade |
+| Silver | limpeza, padronização, classificação e modelagem |
+| Gold | visões analíticas e orientadas para negócios |
 
 
-Bronze → raw, immutable billing data for traceability
+---
+## 🗂️ Camadas
 
-Silver → cleaning, standardization, classification, and modeling
+---
 
-Gold → analytical, business-oriented views
+### 🥉 Bronze Layer — Dados Brutos
 
-Each layer increases data reliability and analytical value.
+Armazena registros de faturamento brutos com transformação mínima.
 
-🥉 Bronze Layer — Raw Data
+- Sem junções ou agregações  
+- Preserva a estrutura e valores originais  
+- Serve como fonte de verdade para auditoria e reprocessamento  
 
-Stores raw billing records with minimal transformation
+**Tabela principal:** `project.raw_bronze`
 
-No joins or aggregations
+#### 📋 Estrutura da Tabela
 
-Preserves original structure and values
-
-Acts as the source of truth for audits and reprocessing
-
-Table
-
-project.raw_bronze
-
-**Source CSV Structure:**
 | Column | Type | Description |
 |--------|------|-------------|
 | billing_account_id | TEXT | GCP billing account ID |
@@ -68,118 +61,121 @@ project.raw_bronze
 | project_name | TEXT | Project display name |
 | business_unit | TEXT | Business unit/division |
 | team_name | TEXT | Owning team name |
-| service_description | TEXT | GCP service (BigQuery, Storage, etc.) |
-| sku_description | TEXT | SKU details (Query GB, VM Instance, etc.) |
-| region | TEXT | GCP region (southamerica-east1, etc.) |
+| service_description | TEXT | GCP service |
+| sku_description | TEXT | SKU details |
+| region | TEXT | GCP region |
 | usage_amount | NUMERIC(15,3) | Usage quantity |
-| usage_unit | TEXT | Unit (gigabytes, hours, etc.) |
+| usage_unit | TEXT | Unit type |
 | cost | NUMERIC(10,4) | Cost amount |
-| currency | TEXT | Currency (USD, BRL, etc.) |
+| currency | TEXT | Currency |
 | is_bigquery | BOOLEAN | BigQuery service flag |
 | bq_query_type | TEXT | BigQuery query type |
-| bq_bad_bytes | NUMERIC(15,3) | Bad bytes processed (BigQuery) |
-| bq_query_text | TEXT | Actual SQL query text |
+| bq_bad_bytes | NUMERIC(15,3) | Bad bytes processed |
+| bq_query_text | TEXT | SQL query text |
 | temp_id_line | SERIAL | Temporary line identifier |
 
-**Sample data volume:** ~10k rows across 4 months (2025-10 to 2026-01)
+**Volume amostral:** ~10k linhas em 4 meses (2025-10 a 2026-01)
 
-**Table:** `project.raw_bronze` (matches CSV 1:1)
+---
 
-🥈 Silver Layer — Cleaning & Modeling
+### 🥈 Silver Layer — Limpeza e Modelagem
 
-This layer contains the core ELT logic.
+Camada responsável pela lógica central do processo **ELT**.
 
-Key operations
+#### 🔧 Operações Principais
 
-Text normalization using TRIM, INITCAP, COALESCE
+- Normalização de texto com `TRIM`, `INITCAP`, `COALESCE`
+- Classificação baseada em regras com `REGEXP`
+- Criação de 8 tabelas dimensão
+- Tabela fato particionada: `main_silver`
+- Cálculo de percentis de uso (`P50` / `P90`)
+- Enriquecimento e padronização de dados
 
-Rule-based classification using REGEXP
+#### 🧠 Classificação de Queries BigQuery
 
-Creation of 8 dimensional tables
+O texto SQL é categorizado via expressões regulares:
 
-Partitioned fact table: main_silver
+| Padrão | Significado |
+|--------|-------------|
+| `INSERT\|MERGE` | Operações de gravação |
+| `SELECT \s+\*` | Full table scan |
+| `JOIN.*?JOIN` | Múltiplas junções |
+| `GROUP BY\|ORDER BY` | Agregações |
 
-Calculation of usage percentiles (P50 / P90)
+#### 📦 Tabela Fato
 
-Text Classification (REGEXP)
+**Tabela:** `main_silver`
 
-BigQuery query text is classified using regex patterns such as:
+- Particionada por `invoice_month`
+- Otimizada para análises
+- Suporte a Window Functions
 
-INSERT|MERGE → write operations
+---
 
-SELECT\s+\* → full scans
+### 🥇 Gold Layer — Visualizações Analíticas
 
-JOIN.*?JOIN → multi-joins
+Camada final com visões somente leitura para BI e análises ad-hoc.
 
-GROUP BY|ORDER BY → aggregations
+#### 📊 Exemplos de Entregas
 
-Fact Table
+- Uso e custo mensal por equipe  
+- Acumulado diário de custos  
+- Distribuição de custos por time  
+- Ranking mensal com `ROW_NUMBER()`  
+- Detecção de outliers com base no `P90`
 
-main_silver
+#### ⚡ Window Functions Utilizadas
 
-Partitioned by invoice_month
+- `SUM() OVER`
+- `ROW_NUMBER() OVER`
+- `RANK() OVER`
+- `AVG() OVER`
 
-Designed for analytical queries and window functions
+---
 
-🥇 Gold Layer — Analytical Views
+## ⚙️ Tecnologias e Ferramentas
 
-The Gold layer exposes read-only views for BI tools or ad-hoc analysis.
+- PostgreSQL
+- SQL
+- Views
+- CTEs
+- Window Functions
+- Star Schema
+- Git
 
-Examples:
+---
 
-Monthly usage and cost per team
+## 📂 Estrutura
 
-Daily cost accumulation
+```bash
+schemas/
+bronze/
+silver/
+gold/
+views/
+constraints/
+README.md
+```
 
-Cost distribution by team
-
-Monthly rankings (ROW_NUMBER)
-
-Outlier detection based on P90 thresholds
-
-Window functions heavily used:
-
-SUM() OVER
-
-ROW_NUMBER() OVER
-
-🧠 SQL Techniques Applied
-
-SQL-first ELT transformations
-
-Text cleaning and normalization
-
-Regular expressions (~*)
-
-Window functions (ranking, cumulative metrics)
-
-Partitioned fact tables
-
-Multi-table joins (8 dimensions)
-
-🛠️ Technologies
-
-PostgreSQL 16
-
-pgAdmin 4
-
-SQL
+### 📈 Amostra de Resultados
+Uso e custo por mês
 
 
-📈 Sample Results
-Usage and cost per month
 <img width="781" height="160" alt="image" src="https://github.com/user-attachments/assets/65332757-71f4-4ed9-9883-cb5f00d8e8bf" />
 
+Registros que excedem o limite de utilização do P90
 
-Records exceeding the P90 usage threshold
+
 <img width="1211" height="157" alt="image" src="https://github.com/user-attachments/assets/b5b6af4a-83af-469e-8a04-358e913fd4f7" />
 
+---
 
+⚠️ Limitações
 
-⚠️ Limitations
+Sem orquestração
 
-No orchestration or scheduling
+Ingestão manual
 
-Manual CSV ingestion
+Protótipo local
 
-Local prototype only
+---------------------------------------------------------
